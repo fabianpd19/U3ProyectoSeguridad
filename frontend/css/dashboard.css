@@ -543,6 +543,485 @@
   justify-content: flex-end;
 }
 
+/* Estilos adicionales para el dashboard funcional */
+
+/* Estados de carga */
+.loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  color: #666;
+  font-style: italic;
+}
+
+.no-data {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  color: #999;
+  font-style: italic;
+}
+
+/* Badges y estados */
+.status-badge {
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  text-transform: uppercase;
+}
+
+.status-badge.active,
+.status-badge.success,
+.status-badge.completed {
+  background: #d4edda;
+  color: #155724;
+}
+
+.status-badge.inactive,
+.status-badge.failed,
+.status-badge.error {
+  background: #f8d7da;
+  color: #721c24;
+}
+
+.status-badge.pending,
+.status-badge.warning {
+  background: #fff3cd;
+  color: #856404;
+}
+
+.status-badge.revoked,
+.status-badge.expired {
+  background: #f5c6cb;
+  color: #721c24;
+}
+
+/* Niveles de riesgo */
+.risk-score {
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-weight: bold;
+  font-size: 0.9rem;
+}
+
+.risk-score.low {
+  background: #d4edda;
+  color: #155724;
+}
+
+.risk-score.medium {
+  background: #fff3cd;
+  color: #856404;
+}
+
+.risk-score.high {
+  background: #f8d7da;
+  color: #721c24;
+}
+
+.risk-score.critical {
+  background: #f5c6cb;
+  color: #721c24;
+  animation: pulse 2s infinite;
+}
+
+.risk-score.unknown {
+  background: #e2e3e5;
+  color: #6c757d;
+}
+
+.risk-level {
+  padding: 2px 6px;
+  border-radius: 8px;
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  font-weight: 500;
+}
+
+.risk-level.low {
+  background: #d4edda;
+  color: #155724;
+}
+
+.risk-level.medium {
+  background: #fff3cd;
+  color: #856404;
+}
+
+.risk-level.high {
+  background: #f8d7da;
+  color: #721c24;
+}
+
+.risk-level.critical {
+  background: #f5c6cb;
+  color: #721c24;
+}
+
+/* Items de IP */
+.ip-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem;
+  margin-bottom: 0.5rem;
+  border: 1px solid #dee2e6;
+  border-radius: 6px;
+  background: #f8f9fa;
+}
+
+.ip-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.ip-address {
+  font-weight: 600;
+  color: #495057;
+}
+
+.ip-count {
+  font-size: 0.85rem;
+  color: #dc3545;
+  font-weight: 500;
+}
+
+.action-btn-sm {
+  padding: 0.25rem 0.5rem;
+  font-size: 0.75rem;
+  border: 1px solid #dc3545;
+  background: transparent;
+  color: #dc3545;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.action-btn-sm:hover {
+  background: #dc3545;
+  color: white;
+}
+
+/* Items de alerta */
+.alert-item {
+  padding: 1rem;
+  margin-bottom: 0.75rem;
+  border-left: 4px solid #ffc107;
+  background: #fff9e6;
+  border-radius: 4px;
+}
+
+.alert-item.critical {
+  border-left-color: #dc3545;
+  background: #fef2f2;
+}
+
+.alert-item strong {
+  color: #495057;
+}
+
+.alert-item small {
+  color: #6c757d;
+  font-size: 0.8rem;
+}
+
+/* Configuración de alertas */
+.alert-config-item {
+  padding: 1.5rem;
+  margin-bottom: 1rem;
+  border: 1px solid #dee2e6;
+  border-radius: 8px;
+  background: white;
+}
+
+.alert-config-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.alert-config-header h4 {
+  margin: 0;
+  color: #495057;
+}
+
+.alert-config-details {
+  margin-bottom: 1rem;
+  color: #6c757d;
+  font-size: 0.9rem;
+}
+
+.alert-config-details p {
+  margin: 0.25rem 0;
+}
+
+.alert-config-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+/* Formularios en modales */
+.scan-form,
+.cert-form,
+.alert-form,
+.2fa-setup {
+  padding: 1rem 0;
+}
+
+.form-group {
+  margin-bottom: 1rem;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: 500;
+  color: #495057;
+}
+
+.form-group input,
+.form-group select {
+  width: 100%;
+  padding: 0.5rem;
+  border: 1px solid #ced4da;
+  border-radius: 4px;
+  font-size: 0.9rem;
+}
+
+.form-group input:focus,
+.form-group select:focus {
+  outline: none;
+  border-color: #007bff;
+  box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}
+
+/* Configuración 2FA */
+.qr-code {
+  text-align: center;
+  margin: 1rem 0;
+}
+
+.qr-code img {
+  max-width: 200px;
+  border: 1px solid #dee2e6;
+  border-radius: 8px;
+}
+
+/* Acciones de modal */
+.modal-actions {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: flex-end;
+  margin-top: 1.5rem;
+  padding-top: 1rem;
+  border-top: 1px solid #dee2e6;
+}
+
+.btn {
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 500;
+  transition: all 0.2s;
+}
+
+.btn.primary {
+  background: #007bff;
+  color: white;
+}
+
+.btn.primary:hover {
+  background: #0056b3;
+}
+
+.btn.secondary {
+  background: #6c757d;
+  color: white;
+}
+
+.btn.secondary:hover {
+  background: #545b62;
+}
+
+.btn.success {
+  background: #28a745;
+  color: white;
+}
+
+.btn.success:hover {
+  background: #1e7e34;
+}
+
+.btn.danger {
+  background: #dc3545;
+  color: white;
+}
+
+.btn.danger:hover {
+  background: #c82333;
+}
+
+/* Detalles de escaneo */
+.scan-details {
+  max-width: 500px;
+}
+
+.scan-details p {
+  margin: 0.5rem 0;
+}
+
+.scan-details strong {
+  color: #495057;
+}
+
+.scan-details ul {
+  max-height: 200px;
+  overflow-y: auto;
+  margin-top: 0.5rem;
+  padding-left: 1.5rem;
+}
+
+.scan-details li {
+  margin-bottom: 0.25rem;
+  color: #6c757d;
+}
+
+/* Animaciones */
+@keyframes pulse {
+  0% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.7;
+  }
+
+  100% {
+    opacity: 1;
+  }
+}
+
+/* Dropdown de usuario mejorado */
+.user-dropdown {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  background: white;
+  border: 1px solid #dee2e6;
+  border-radius: 6px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  padding: 0.5rem 0;
+  min-width: 180px;
+  display: none;
+  z-index: 1000;
+}
+
+.user-dropdown.show {
+  display: block;
+}
+
+.user-dropdown a {
+  display: block;
+  padding: 0.5rem 1rem;
+  color: #495057;
+  text-decoration: none;
+  transition: background 0.2s;
+}
+
+.user-dropdown a:hover {
+  background: #f8f9fa;
+}
+
+.user-dropdown hr {
+  margin: 0.5rem 0;
+  border: none;
+  border-top: 1px solid #dee2e6;
+}
+
+/* Responsivo */
+@media (max-width: 768px) {
+  .ip-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+
+  .alert-config-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+
+  .modal-actions {
+    flex-direction: column;
+  }
+
+  .btn {
+    width: 100%;
+    text-align: center;
+  }
+}
+
+/* Estados de botones */
+.action-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.action-btn:disabled:hover {
+  background: initial;
+  color: initial;
+}
+
+/* Mejoras visuales para tablas */
+.data-table tbody tr:hover {
+  background-color: #f8f9fa;
+}
+
+.data-table .no-data {
+  font-style: italic;
+  color: #6c757d;
+  text-align: center;
+  padding: 2rem;
+}
+
+/* Indicadores de estado del sistema */
+.system-status .status-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid #f1f3f4;
+}
+
+.system-status .status-item:last-child {
+  border-bottom: none;
+}
+
+.status-indicator {
+  font-size: 1.2em;
+  font-weight: bold;
+}
+
+.status-indicator.online {
+  color: #28a745;
+}
+
+.status-indicator.offline {
+  color: #dc3545;
+}
+
+.status-indicator.warning {
+  color: #ffc107;
+}
+
 /* Responsive para dashboard */
 @media (max-width: 1024px) {
   .sidebar {

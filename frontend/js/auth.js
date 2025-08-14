@@ -87,13 +87,29 @@ const Storage = {
   get: (key) => {
     try {
       const item = localStorage.getItem(key);
-      return item ? JSON.parse(item) : null;
+      if (!item) return null;
+
+      // Verificar si es un JWT token (comienza con eyJ)
+      if (typeof item === "string" && item.startsWith("eyJ")) {
+        return item; // Retornar el token directamente sin hacer JSON.parse
+      }
+
+      // Intentar parsear como JSON
+      try {
+        return JSON.parse(item);
+      } catch (parseError) {
+        // Si no es JSON válido, retornar el string tal como está
+        console.warn(
+          `Item '${key}' is not valid JSON, returning as string:`,
+          parseError
+        );
+        return item;
+      }
     } catch (error) {
-      console.error("Error parsing stored data:", error);
-      return localStorage.getItem(key);
+      console.error("Error getting stored data:", error);
+      return null;
     }
   },
-
   set: (key, value) => {
     try {
       localStorage.setItem(
@@ -104,7 +120,6 @@ const Storage = {
       console.error("Error storing data:", error);
     }
   },
-
   remove: (key) => localStorage.removeItem(key),
 };
 

@@ -15,6 +15,7 @@ const certificateRoutes = require("./routes/certificates");
 const vulnerabilityRoutes = require("./routes/vulnerabilities");
 const rolesRoutes = require("./routes/roles");
 const abacRoutes = require("./routes/abac");
+const userRoutes = require("./routes/users");
 
 const app = express();
 const frontendPath = path.resolve(__dirname, "../frontend");
@@ -163,6 +164,7 @@ app.use("/api/certificates", certificateRoutes);
 app.use("/api/vulnerabilities", vulnerabilityRoutes);
 app.use("/api/roles", rolesRoutes);
 app.use("/api/abac", abacRoutes);
+app.use("/api/users", userRoutes);
 
 // ✅ RUTA ESPECÍFICA PARA DASHBOARD (SOLUCIÓN DEFINITIVA)
 app.get("/frontend/dashboard.html", (req, res) => {

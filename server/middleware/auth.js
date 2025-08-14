@@ -192,12 +192,38 @@ function requirePermission(resource, action) {
       let hasPermission = false;
 
       // Verificar permisos en cada rol
-      for (const role of userRoles) {
-        const permissions = JSON.parse(role.permissions);
+      // En middleware/auth.js, en la función requirePermission,
+      // reemplaza estas líneas (alrededor de línea 170-180):
 
-        if (permissions[resource] && permissions[resource].includes(action)) {
-          hasPermission = true;
-          break;
+      // Verificar permisos en cada rol
+      for (const role of userRoles) {
+        let permissions;
+        try {
+          // Verificar si permissions ya es un objeto o es un string JSON
+          if (typeof role.permissions === "string") {
+            permissions = JSON.parse(role.permissions);
+          } else if (
+            typeof role.permissions === "object" &&
+            role.permissions !== null
+          ) {
+            permissions = role.permissions;
+          } else {
+            console.warn("Invalid permissions format for role:", role);
+            continue;
+          }
+
+          if (permissions[resource] && permissions[resource].includes(action)) {
+            hasPermission = true;
+            break;
+          }
+        } catch (error) {
+          console.error(
+            "Error parsing role permissions:",
+            error,
+            "Role:",
+            role
+          );
+          continue; // Continuar con el siguiente rol si hay error
         }
       }
 
@@ -212,7 +238,16 @@ function requirePermission(resource, action) {
           {
             resource,
             action,
-            userRoles: userRoles.map((r) => JSON.parse(r.permissions)),
+            userRoles: userRoles.map((r) => {
+              try {
+                return typeof r.permissions === "string"
+                  ? JSON.parse(r.permissions)
+                  : r.permissions;
+              } catch (e) {
+                console.error("Error parsing permissions for logging:", e);
+                return r.permissions;
+              }
+            }),
           }
         );
         return res
