@@ -1,35 +1,4 @@
 // Lógica específica para la página de login
-
-const Auth = {
-  async getCaptcha() {
-    // Simulación de obtención de captcha
-    return { captcha: "ABC123", token: "token123" };
-  },
-  async login(credentials) {
-    // Simulación de login
-    if (credentials.captcha !== "ABC123") throw new Error("Captcha incorrecto");
-    if (
-      credentials.username === "admin" &&
-      credentials.password === "password"
-    ) {
-      if (credentials.twoFactorCode === "123456") return { success: true };
-      else return { success: false, requiresTwoFactor: true };
-    }
-    throw new Error("Credenciales incorrectas");
-  },
-  async register(userData) {
-    // Simulación de registro
-    if (userData.captcha !== "token123") throw new Error("Captcha incorrecto");
-    if (userData.password !== userData.confirmPassword)
-      throw new Error("Las contraseñas no coinciden");
-    if (!userData.username || !userData.email || !userData.password)
-      throw new Error("Por favor completa todos los campos");
-    return { success: true };
-  },
-};
-
-// ...existing code...
-
 document.addEventListener("DOMContentLoaded", () => {
   const loginForm = document.getElementById("loginForm");
   const registerForm = document.getElementById("registerForm");
@@ -52,41 +21,53 @@ document.addEventListener("DOMContentLoaded", () => {
   loadRegCaptcha();
 
   // Event listeners
-  loginForm.addEventListener("submit", handleLogin);
-  registerForm.addEventListener("submit", handleRegister);
-  loginLink.addEventListener("click", showLoginForm);
-  registerLink.addEventListener("click", showRegisterForm);
-  refreshCaptcha.addEventListener("click", loadCaptcha);
-  regRefreshCaptcha.addEventListener("click", loadRegCaptcha);
-  passwordInput.addEventListener("input", updatePasswordStrength);
+  if (loginForm) loginForm.addEventListener("submit", handleLogin);
+  if (registerForm) registerForm.addEventListener("submit", handleRegister);
+  if (loginLink) loginLink.addEventListener("click", showLoginForm);
+  if (registerLink) registerLink.addEventListener("click", showRegisterForm);
+  if (refreshCaptcha) refreshCaptcha.addEventListener("click", loadCaptcha);
+  if (regRefreshCaptcha)
+    regRefreshCaptcha.addEventListener("click", loadRegCaptcha);
+  if (passwordInput)
+    passwordInput.addEventListener("input", updatePasswordStrength);
 
   // Funciones de captcha
   async function loadCaptcha() {
     try {
-      const captcha = await Auth.getCaptcha();
-      captchaDisplay.textContent = captcha.captcha;
+      if (captchaDisplay) captchaDisplay.textContent = "Cargando...";
+      const captcha = await window.AuthManager.getCaptcha();
+      if (captchaDisplay) captchaDisplay.textContent = captcha.captcha;
       currentCaptcha = captcha.token;
     } catch (error) {
-      captchaDisplay.textContent = "Error cargando captcha";
+      if (captchaDisplay) captchaDisplay.textContent = "Error cargando captcha";
       console.error("Error loading captcha:", error);
+      window.UI.showAlert(
+        "Error al cargar el captcha. Intenta nuevamente.",
+        "error"
+      );
     }
   }
 
   async function loadRegCaptcha() {
     try {
-      const captcha = await Auth.getCaptcha();
-      regCaptchaDisplay.textContent = captcha.captcha;
+      if (regCaptchaDisplay) regCaptchaDisplay.textContent = "Cargando...";
+      const captcha = await window.AuthManager.getCaptcha();
+      if (regCaptchaDisplay) regCaptchaDisplay.textContent = captcha.captcha;
       currentRegCaptcha = captcha.token;
     } catch (error) {
-      regCaptchaDisplay.textContent = "Error cargando captcha";
+      if (regCaptchaDisplay)
+        regCaptchaDisplay.textContent = "Error cargando captcha";
       console.error("Error loading register captcha:", error);
+      window.UI.showAlert(
+        "Error al cargar el captcha de registro. Intenta nuevamente.",
+        "error"
+      );
     }
   }
 
   // Manejo del login
   async function handleLogin(e) {
     e.preventDefault();
-
     const loginBtn = document.getElementById("loginBtn");
     const formData = new FormData(loginForm);
 
@@ -94,6 +75,7 @@ document.addEventListener("DOMContentLoaded", () => {
       username: formData.get("username"),
       password: formData.get("password"),
       captcha: formData.get("captcha"),
+      captchaToken: currentCaptcha, // Token del servidor
       twoFactorCode: formData.get("twoFactorCode"),
     };
 
@@ -103,53 +85,74 @@ document.addEventListener("DOMContentLoaded", () => {
       !credentials.password ||
       !credentials.captcha
     ) {
-      UI.showAlert("Por favor completa todos los campos requeridos", "error");
+      window.UI.showAlert(
+        "Por favor completa todos los campos requeridos",
+        "error"
+      );
       return;
     }
 
     if (requiresTwoFactor && !credentials.twoFactorCode) {
-      UI.showAlert(
+      window.UI.showAlert(
         "Por favor ingresa el código de autenticación de dos factores",
         "error"
       );
       return;
     }
 
-    try {
-      UI.setLoading(loginBtn, true);
+    if (!currentCaptcha) {
+      window.UI.showAlert(
+        "Error con el captcha. Por favor recarga la página.",
+        "error"
+      );
+      return;
+    }
 
-      const result = await Auth.login(credentials);
+    try {
+      window.UI.setLoading(loginBtn, true);
+      const result = await window.AuthManager.login(credentials);
 
       if (result.requiresTwoFactor) {
         requiresTwoFactor = true;
-        document.getElementById("twoFactorGroup").style.display = "block";
-        UI.showAlert(
+        const twoFactorGroup = document.getElementById("twoFactorGroup");
+        if (twoFactorGroup) twoFactorGroup.style.display = "block";
+        window.UI.showAlert(
           "Por favor ingresa tu código de autenticación de dos factores",
           "info"
         );
         return;
       }
 
-      if (result.success) {
-        UI.showAlert("Login exitoso. Redirigiendo...", "success");
+      if (result.success && result.token) {
+        window.UI.showAlert("Login exitoso. Redirigiendo...", "success");
         setTimeout(() => {
-          window.location.href = "/dashboard.html";
+          window.location.href = "/frontend/dashboard.html";
         }, 1000);
+      } else {
+        window.UI.showAlert(
+          result.error || "Error desconocido durante el login",
+          "error"
+        );
+        await loadCaptcha(); // Recargar captcha después de error
       }
     } catch (error) {
-      UI.showAlert(error.message || "Error durante el login", "error");
-      loadCaptcha(); // Recargar captcha después de error
+      console.error("Login error:", error);
+      window.UI.showAlert(
+        error.message || "Error durante el login. Verifica tus credenciales.",
+        "error"
+      );
+      await loadCaptcha(); // Recargar captcha después de error
       requiresTwoFactor = false;
-      document.getElementById("twoFactorGroup").style.display = "none";
+      const twoFactorGroup = document.getElementById("twoFactorGroup");
+      if (twoFactorGroup) twoFactorGroup.style.display = "none";
     } finally {
-      UI.setLoading(loginBtn, false);
+      window.UI.setLoading(loginBtn, false);
     }
   }
 
   // Manejo del registro
   async function handleRegister(e) {
     e.preventDefault();
-
     const registerBtn = document.getElementById("registerBtn");
     const formData = new FormData(registerForm);
 
@@ -157,9 +160,11 @@ document.addEventListener("DOMContentLoaded", () => {
       username: formData.get("regUsername"),
       email: formData.get("regEmail"),
       password: formData.get("regPassword"),
-      confirmPassword: formData.get("regConfirmPassword"),
+      confirmPassword:
+        document.getElementById("regConfirmPassword")?.value ||
+        formData.get("regPassword"),
       captcha: formData.get("regCaptcha"),
-      captchaToken: currentRegCaptcha,
+      captchaToken: currentRegCaptcha, // Token del servidor
     };
 
     // Validaciones
@@ -169,111 +174,179 @@ document.addEventListener("DOMContentLoaded", () => {
       !userData.password ||
       !userData.captcha
     ) {
-      UI.showAlert("Por favor completa todos los campos", "error");
+      window.UI.showAlert("Por favor completa todos los campos", "error");
       return;
     }
 
     if (userData.password !== userData.confirmPassword) {
-      UI.showAlert("Las contraseñas no coinciden", "error");
+      window.UI.showAlert("Las contraseñas no coinciden", "error");
       return;
     }
 
-    if (!isValidPassword(userData.password)) {
-      UI.showAlert(
-        "La contraseña no cumple con los requisitos de seguridad",
+    if (!currentRegCaptcha) {
+      window.UI.showAlert(
+        "Error con el captcha. Por favor recarga la página.",
         "error"
       );
       return;
     }
 
+    // Validaciones usando la utilidad global si está disponible
+    if (window.Validation) {
+      const passwordValidation = window.Validation.password(userData.password);
+      if (!passwordValidation.isValid) {
+        window.UI.showAlert(
+          "Contraseña inválida: " + passwordValidation.errors.join(", "),
+          "error"
+        );
+        return;
+      }
+
+      const usernameValidation = window.Validation.username(userData.username);
+      if (!usernameValidation.isValid) {
+        window.UI.showAlert(
+          "Usuario inválido: " + usernameValidation.errors.join(", "),
+          "error"
+        );
+        return;
+      }
+
+      if (!window.Validation.email(userData.email)) {
+        window.UI.showAlert("Email inválido", "error");
+        return;
+      }
+    }
+
     try {
-      UI.setLoading(registerBtn, true);
+      window.UI.setLoading(registerBtn, true);
+      const result = await window.AuthManager.register(userData);
 
-      const result = await Auth.register(userData);
-
-      if (result.success) {
-        UI.showAlert(
-          "Registro exitoso. Por favor verifica tu email.",
+      if (result.success || result.userId) {
+        window.UI.showAlert(
+          "Registro exitoso. Ahora puedes iniciar sesión.",
           "success"
         );
         showLoginForm();
         registerForm.reset();
+        updatePasswordStrength(); // Reset password strength indicator
+      } else {
+        window.UI.showAlert(
+          result.error || "Error durante el registro",
+          "error"
+        );
+        await loadRegCaptcha();
       }
     } catch (error) {
-      UI.showAlert(error.message || "Error durante el registro", "error");
-      loadRegCaptcha();
+      console.error("Register error:", error);
+      window.UI.showAlert(
+        error.message || "Error durante el registro. Intenta nuevamente.",
+        "error"
+      );
+      await loadRegCaptcha();
     } finally {
-      UI.setLoading(registerBtn, false);
+      window.UI.setLoading(registerBtn, false);
     }
   }
 
   // Funciones de UI
   function showLoginForm() {
-    document.getElementById("loginContainer").style.display = "block";
-    document.getElementById("registerContainer").style.display = "none";
+    const loginContainer = document.getElementById("loginContainer");
+    const registerContainer = document.getElementById("registerContainer");
+    const twoFactorGroup = document.getElementById("twoFactorGroup");
+
+    if (loginContainer) loginContainer.style.display = "block";
+    if (registerContainer) registerContainer.style.display = "none";
+    if (loginForm && loginForm.parentElement)
+      loginForm.parentElement.style.display = "block";
+    if (registerForm) registerForm.style.display = "none";
+
     requiresTwoFactor = false;
-    document.getElementById("twoFactorGroup").style.display = "none";
+    if (twoFactorGroup) twoFactorGroup.style.display = "none";
   }
 
   function showRegisterForm() {
-    document.getElementById("loginContainer").style.display = "none";
-    document.getElementById("registerContainer").style.display = "block";
+    const loginContainer = document.getElementById("loginContainer");
+    const registerContainer = document.getElementById("registerContainer");
+
+    if (loginForm && loginForm.parentElement)
+      loginForm.parentElement.style.display = "none";
+    if (registerForm) registerForm.style.display = "block";
+    if (loginContainer) loginContainer.style.display = "none";
+    if (registerContainer) registerContainer.style.display = "block";
   }
 
-  // Validación de contraseña
-  function isValidPassword(password) {
-    const minLength = 8;
-    const hasUpperCase = /[A-Z]/.test(password);
-    const hasLowerCase = /[a-z]/.test(password);
-    const hasNumbers = /\d/.test(password);
-    const hasSpecialChar = /[!@#$%^&*(),.?":{}|<>]/.test(password);
-
-    return (
-      password.length >= minLength &&
-      hasUpperCase &&
-      hasLowerCase &&
-      hasNumbers &&
-      hasSpecialChar
-    );
-  }
-
-  // Medidor de fuerza de contraseña
   function updatePasswordStrength() {
+    if (!passwordInput || !strengthBar || !strengthText) return;
+
     const password = passwordInput.value;
-    let strength = 0;
-    const feedback = [];
+    if (!password) {
+      strengthBar.style.width = "0%";
+      strengthBar.className = "strength-bar";
+      strengthText.textContent = "";
+      return;
+    }
 
-    if (password.length >= 8) strength++;
-    else feedback.push("mínimo 8 caracteres");
+    // Validación básica si no hay utilidad global
+    let validation = { strength: "media", isValid: true, errors: [] };
 
-    if (/[A-Z]/.test(password)) strength++;
-    else feedback.push("mayúsculas");
+    if (window.Validation) {
+      validation = window.Validation.password(password);
+    } else {
+      // Validación básica sin utilidad
+      if (password.length < 8) {
+        validation = {
+          strength: "débil",
+          isValid: false,
+          errors: ["mínimo 8 caracteres"],
+        };
+      } else if (
+        password.length >= 12 &&
+        /[A-Z]/.test(password) &&
+        /[a-z]/.test(password) &&
+        /\d/.test(password) &&
+        /[!@#$%^&*]/.test(password)
+      ) {
+        validation = { strength: "muy fuerte", isValid: true, errors: [] };
+      } else if (
+        password.length >= 10 &&
+        /[A-Z]/.test(password) &&
+        /[a-z]/.test(password) &&
+        /\d/.test(password)
+      ) {
+        validation = { strength: "fuerte", isValid: true, errors: [] };
+      }
+    }
 
-    if (/[a-z]/.test(password)) strength++;
-    else feedback.push("minúsculas");
+    const strengthLevels = [
+      "muy débil",
+      "débil",
+      "media",
+      "fuerte",
+      "muy fuerte",
+    ];
+    const strengthIndex = strengthLevels.indexOf(validation.strength);
+    const percentage = Math.max(((strengthIndex + 1) / 5) * 100, 20);
 
-    if (/\d/.test(password)) strength++;
-    else feedback.push("números");
-
-    if (/[!@#$%^&*(),.?":{}|<>]/.test(password)) strength++;
-    else feedback.push("símbolos");
-
-    // Actualizar barra visual
-    const percentage = (strength / 5) * 100;
     strengthBar.style.width = percentage + "%";
 
-    if (strength <= 2) {
+    if (strengthIndex <= 1) {
       strengthBar.className = "strength-bar weak";
-      strengthText.textContent = "Débil - Falta: " + feedback.join(", ");
-    } else if (strength <= 3) {
+    } else if (strengthIndex === 2) {
       strengthBar.className = "strength-bar medium";
-      strengthText.textContent = "Media - Falta: " + feedback.join(", ");
-    } else if (strength <= 4) {
+    } else if (strengthIndex === 3) {
       strengthBar.className = "strength-bar strong";
-      strengthText.textContent = "Fuerte - Falta: " + feedback.join(", ");
     } else {
       strengthBar.className = "strength-bar very-strong";
-      strengthText.textContent = "Muy fuerte";
+    }
+
+    if (validation.isValid) {
+      strengthText.textContent = `Contraseña ${validation.strength}`;
+      strengthText.className = "strength-text success";
+    } else {
+      strengthText.textContent = `${
+        validation.strength
+      } - Falta: ${validation.errors.join(", ")}`;
+      strengthText.className = "strength-text error";
     }
   }
 });

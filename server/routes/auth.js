@@ -7,17 +7,37 @@ const { executeQuery, executeTransaction } = require("../config/database");
 const { logSecurityEvent } = require("../utils/security");
 const { generateCaptcha, verifyCaptcha } = require("../utils/captcha");
 const { validateInput, sanitizeInput } = require("../utils/validation");
+const { authenticateToken } = require("../middleware/auth");
 
 const router = express.Router();
-const { authenticateToken } = require("../middleware/auth");
 
 // Registro de usuario con validaciones de seguridad
 router.post("/register", async (req, res) => {
   try {
-    const { username, email, password, captcha } = req.body;
+    const { username, email, password, captcha, captchaToken } = req.body;
 
-    // Validar captcha
-    if (!verifyCaptcha(captcha, req.session.captchaToken)) {
+    console.log(
+      `[REGISTER] Intento de registro: ${username}, captcha: ${captcha}, token: ${
+        captchaToken || req.session.captchaToken
+      }`
+    );
+
+    // Verificar captcha (usar captchaToken del body o de la sesión)
+    const tokenToUse = captchaToken || req.session.captchaToken;
+
+    if (!captcha || !tokenToUse) {
+      await logSecurityEvent(
+        null,
+        "register_attempt",
+        "captcha_missing",
+        req.ip,
+        req.get("User-Agent"),
+        false
+      );
+      return res.status(400).json({ error: "Captcha requerido" });
+    }
+
+    if (!verifyCaptcha(captcha, tokenToUse)) {
       await logSecurityEvent(
         null,
         "register_attempt",
@@ -29,10 +49,13 @@ router.post("/register", async (req, res) => {
       return res.status(400).json({ error: "Captcha inválido" });
     }
 
+    // Limpiar token de captcha después de usar
+    delete req.session.captchaToken;
+
     // Validar entrada
     const validation = validateInput({ username, email, password });
     if (!validation.isValid) {
-      return res.status(400).json({ error: validation.errors });
+      return res.status(400).json({ error: validation.errors.join(", ") });
     }
 
     // Sanitizar entrada
@@ -67,11 +90,15 @@ router.post("/register", async (req, res) => {
       [sanitizedData.username, sanitizedData.email, passwordHash, salt]
     );
 
-    // Asignar rol de usuario por defecto
-    await executeQuery(
-      "INSERT INTO user_roles (user_id, role_id, assigned_by) VALUES (?, 3, 1)",
-      [result.insertId]
-    );
+    // Asignar rol de usuario por defecto (verificar que existe el rol)
+    try {
+      await executeQuery(
+        "INSERT INTO user_roles (user_id, role_id, assigned_by) VALUES (?, 3, 1)",
+        [result.insertId]
+      );
+    } catch (roleError) {
+      console.warn("No se pudo asignar rol por defecto:", roleError.message);
+    }
 
     await logSecurityEvent(
       result.insertId,
@@ -83,6 +110,7 @@ router.post("/register", async (req, res) => {
     );
 
     res.status(201).json({
+      success: true,
       message: "Usuario registrado exitosamente",
       userId: result.insertId,
     });
@@ -103,10 +131,31 @@ router.post("/register", async (req, res) => {
 // Login con protección contra fuerza bruta
 router.post("/login", async (req, res) => {
   try {
-    const { username, password, captcha, twoFactorCode } = req.body;
+    const { username, password, captcha, captchaToken, twoFactorCode } =
+      req.body;
 
-    // Validar captcha
-    if (!verifyCaptcha(captcha, req.session.captchaToken)) {
+    console.log(
+      `[LOGIN] Intento de login: ${username}, captcha: ${captcha}, token: ${
+        captchaToken || req.session.captchaToken
+      }`
+    );
+
+    // Verificar captcha (usar captchaToken del body o de la sesión)
+    const tokenToUse = captchaToken || req.session.captchaToken;
+
+    if (!captcha || !tokenToUse) {
+      await logSecurityEvent(
+        null,
+        "login_attempt",
+        "captcha_missing",
+        req.ip,
+        req.get("User-Agent"),
+        false
+      );
+      return res.status(400).json({ error: "Captcha requerido" });
+    }
+
+    if (!verifyCaptcha(captcha, tokenToUse)) {
       await logSecurityEvent(
         null,
         "login_attempt",
@@ -117,6 +166,9 @@ router.post("/login", async (req, res) => {
       );
       return res.status(400).json({ error: "Captcha inválido" });
     }
+
+    // Limpiar token de captcha después de usar
+    delete req.session.captchaToken;
 
     // Buscar usuario
     const users = await executeQuery(
@@ -157,7 +209,6 @@ router.post("/login", async (req, res) => {
       // Incrementar intentos fallidos
       const newFailedAttempts = user.failed_login_attempts + 1;
       let lockUntil = null;
-
       if (newFailedAttempts >= 5) {
         lockUntil = new Date(Date.now() + 30 * 60 * 1000); // 30 minutos
       }
@@ -218,8 +269,17 @@ router.post("/login", async (req, res) => {
     // Crear sesión
     const sessionId = require("crypto").randomBytes(32).toString("hex");
     await executeQuery(
-      "INSERT INTO sessions (id, user_id, ip_address, user_agent, expires_at) VALUES (?, ?, ?, ?, DATE_ADD(NOW(), INTERVAL 24 HOUR))",
+      "INSERT INTO user_sessions (id, user_id, ip_address, user_agent, expires_at) VALUES (?, ?, ?, ?, DATE_ADD(NOW(), INTERVAL 24 HOUR))",
       [sessionId, user.id, req.ip, req.get("User-Agent")]
+    );
+
+    // Obtener roles del usuario
+    const userRoles = await executeQuery(
+      `SELECT r.name 
+       FROM roles r 
+       JOIN user_roles ur ON r.id = ur.role_id 
+       WHERE ur.user_id = ?`,
+      [user.id]
     );
 
     // Generar JWT
@@ -229,7 +289,7 @@ router.post("/login", async (req, res) => {
         username: user.username,
         sessionId: sessionId,
       },
-      process.env.JWT_SECRET,
+      process.env.JWT_SECRET || "default-jwt-secret",
       { expiresIn: "24h" }
     );
 
@@ -246,6 +306,7 @@ router.post("/login", async (req, res) => {
     );
 
     res.json({
+      success: true,
       message: "Login exitoso",
       token: token,
       user: {
@@ -253,6 +314,7 @@ router.post("/login", async (req, res) => {
         username: user.username,
         email: user.email,
         twoFactorEnabled: user.two_factor_enabled,
+        roles: userRoles.map((r) => r.name),
       },
     });
   } catch (error) {
@@ -276,8 +338,10 @@ router.post("/setup-2fa", authenticateToken, async (req, res) => {
 
     // Generar secreto para 2FA
     const secret = speakeasy.generateSecret({
-      name: `${process.env.TWO_FACTOR_SERVICE_NAME} (${req.user.username})`,
-      issuer: process.env.TWO_FACTOR_ISSUER,
+      name: `${process.env.TWO_FACTOR_SERVICE_NAME || "Secure Platform"} (${
+        req.user.username
+      })`,
+      issuer: process.env.TWO_FACTOR_ISSUER || "SecurePlatform",
     });
 
     // Generar QR code
@@ -360,6 +424,7 @@ router.post("/verify-2fa", authenticateToken, async (req, res) => {
     );
 
     res.json({
+      success: true,
       message: "Autenticación de dos factores activada exitosamente",
     });
   } catch (error) {
@@ -381,6 +446,10 @@ router.post("/disable-2fa", authenticateToken, async (req, res) => {
       "SELECT password_hash, two_factor_secret FROM users WHERE id = ?",
       [userId]
     );
+
+    if (users.length === 0) {
+      return res.status(404).json({ error: "Usuario no encontrado" });
+    }
 
     const passwordValid = await bcrypt.compare(
       password,
@@ -435,7 +504,10 @@ router.post("/disable-2fa", authenticateToken, async (req, res) => {
       true
     );
 
-    res.json({ message: "Autenticación de dos factores desactivada" });
+    res.json({
+      success: true,
+      message: "Autenticación de dos factores desactivada",
+    });
   } catch (error) {
     console.error("Error desactivando 2FA:", error);
     res
@@ -450,12 +522,19 @@ router.post("/logout", authenticateToken, async (req, res) => {
     const sessionId = req.user.sessionId;
 
     // Invalidar sesión en base de datos
-    await executeQuery("UPDATE sessions SET is_active = FALSE WHERE id = ?", [
-      sessionId,
-    ]);
+    if (sessionId) {
+      await executeQuery(
+        "UPDATE user_sessions SET is_active = FALSE WHERE id = ?",
+        [sessionId]
+      );
+    }
 
     // Destruir sesión
-    req.session.destroy();
+    req.session.destroy((err) => {
+      if (err) {
+        console.error("Error destroying session:", err);
+      }
+    });
 
     await logSecurityEvent(
       req.user.id,
@@ -466,7 +545,7 @@ router.post("/logout", authenticateToken, async (req, res) => {
       true
     );
 
-    res.json({ message: "Logout exitoso" });
+    res.json({ success: true, message: "Logout exitoso" });
   } catch (error) {
     console.error("Error en logout:", error);
     res.status(500).json({ error: "Error cerrando sesión" });
@@ -477,15 +556,66 @@ router.post("/logout", authenticateToken, async (req, res) => {
 router.get("/captcha", (req, res) => {
   try {
     const captcha = generateCaptcha();
+
+    // Guardar token en sesión para verificación posterior
     req.session.captchaToken = captcha.token;
+
+    console.log(
+      `[CAPTCHA] Generado para sesión: ${captcha.image}, token guardado en sesión`
+    );
 
     res.json({
       captcha: captcha.image,
-      token: captcha.token,
+      token: captcha.token, // Enviar token al frontend para que lo incluya en el request
+      // En desarrollo, mostrar respuesta para pruebas
+      ...(process.env.NODE_ENV !== "production" && { answer: captcha.answer }),
     });
   } catch (error) {
     console.error("Error generando captcha:", error);
     res.status(500).json({ error: "Error generando captcha" });
+  }
+});
+
+// Endpoint para verificar el estado de autenticación
+router.get("/me", authenticateToken, async (req, res) => {
+  try {
+    const userId = req.user.id;
+
+    // Obtener información del usuario y sus roles
+    const users = await executeQuery(
+      "SELECT id, username, email, two_factor_enabled, created_at, last_login FROM users WHERE id = ?",
+      [userId]
+    );
+
+    if (users.length === 0) {
+      return res.status(404).json({ error: "Usuario no encontrado" });
+    }
+
+    const user = users[0];
+
+    // Obtener roles del usuario
+    const userRoles = await executeQuery(
+      `SELECT r.name 
+       FROM roles r 
+       JOIN user_roles ur ON r.id = ur.role_id 
+       WHERE ur.user_id = ?`,
+      [userId]
+    );
+
+    res.json({
+      user: {
+        id: user.id,
+        username: user.username,
+        email: user.email,
+        twoFactorEnabled: user.two_factor_enabled,
+        roles: userRoles.map((r) => r.name),
+        createdAt: user.created_at,
+        lastLogin: user.last_login,
+      },
+    });
+  } catch (error) {
+    console.error("Error obteniendo información del usuario:", error);
+    res.status(500).json({ error: "Error interno del servidor" });
   }
 });
 

@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "start": "node server/app.js",
+    "start": "node --trace-uncaught server/app.js",
     "dev": "nodemon server/app.js",
     "setup": "node scripts/setup.js",
     "db:migrate": "node scripts/migrate.js",

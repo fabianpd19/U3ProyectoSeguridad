@@ -24,26 +24,31 @@
                 <form id="loginForm" class="login-form">
                     <div class="form-group">
                         <label for="username">Usuario o Email</label>
-                        <input type="text" id="username" name="username" required>
+                        <input type="text" id="username" name="username" required autocomplete="username">
                     </div>
 
                     <div class="form-group">
                         <label for="password">Contraseña</label>
-                        <input type="password" id="password" name="password" required>
+                        <input type="password" id="password" name="password" required autocomplete="current-password">
                     </div>
 
                     <div class="form-group captcha-group">
                         <label for="captcha">Captcha</label>
                         <div class="captcha-container">
                             <div id="captchaDisplay" class="captcha-display">Cargando...</div>
-                            <button type="button" id="refreshCaptcha" class="refresh-btn">🔄</button>
+                            <button type="button" id="refreshCaptcha" class="refresh-btn"
+                                title="Recargar captcha">🔄</button>
                         </div>
-                        <input type="text" id="captcha" name="captcha" placeholder="Ingrese el resultado" required>
+                        <input type="text" id="captcha" name="captcha" placeholder="Ingrese el resultado" required
+                            autocomplete="off">
                     </div>
 
                     <div id="twoFactorGroup" class="form-group" style="display: none;">
                         <label for="twoFactorCode">Código de Autenticación (2FA)</label>
-                        <input type="text" id="twoFactorCode" name="twoFactorCode" placeholder="000000" maxlength="6">
+                        <input type="text" id="twoFactorCode" name="twoFactorCode" placeholder="000000" maxlength="6"
+                            autocomplete="one-time-code">
+                        <small class="form-help">Ingrese el código de 6 dígitos de su aplicación de
+                            autenticación</small>
                     </div>
 
                     <button type="submit" id="loginBtn" class="login-btn">
@@ -62,37 +67,46 @@
                 <form id="registerForm">
                     <div class="form-group">
                         <label for="regUsername">Nombre de Usuario</label>
-                        <input type="text" id="regUsername" name="regUsername" required>
+                        <input type="text" id="regUsername" name="regUsername" required autocomplete="username">
+                        <small class="form-help">Mínimo 3 caracteres, solo letras, números y . - _</small>
                     </div>
+
                     <div class="form-group">
                         <label for="regEmail">Email</label>
-                        <input type="email" id="regEmail" name="regEmail" required>
+                        <input type="email" id="regEmail" name="regEmail" required autocomplete="email">
                     </div>
+
                     <div class="form-group">
                         <label for="regPassword">Contraseña</label>
-                        <input type="password" id="regPassword" name="regPassword" required>
+                        <input type="password" id="regPassword" name="regPassword" required autocomplete="new-password">
                         <div class="password-strength">
                             <div id="passwordStrength" class="strength-bar"></div>
                             <span id="strengthText" class="strength-text"></span>
                         </div>
                     </div>
+
                     <div class="form-group">
                         <label for="regConfirmPassword">Confirmar Contraseña</label>
-                        <input type="password" id="regConfirmPassword" name="regConfirmPassword" required>
+                        <input type="password" id="regConfirmPassword" name="regConfirmPassword" required
+                            autocomplete="new-password">
                     </div>
+
                     <div class="form-group captcha-group">
                         <label for="regCaptcha">Captcha</label>
                         <div class="captcha-container">
                             <div id="regCaptchaDisplay" class="captcha-display">Cargando...</div>
-                            <button type="button" id="regRefreshCaptcha" class="refresh-btn">🔄</button>
+                            <button type="button" id="regRefreshCaptcha" class="refresh-btn"
+                                title="Recargar captcha">🔄</button>
                         </div>
-                        <input type="text" id="regCaptcha" name="regCaptcha" placeholder="Ingrese el resultado"
-                            required>
+                        <input type="text" id="regCaptcha" name="regCaptcha" placeholder="Ingrese el resultado" required
+                            autocomplete="off">
                     </div>
+
                     <button type="submit" id="registerBtn" class="login-btn">
                         <span class="btn-text">Crear Cuenta</span>
                         <span class="btn-loading" style="display: none;">Creando...</span>
                     </button>
+
                     <div class="login-links">
                         <a href="#" id="loginLink">¿Ya tienes cuenta? Inicia sesión</a>
                     </div>
@@ -103,8 +117,14 @@
         </div>
     </div>
 
+    <!-- Scripts en el orden correcto -->
+    <!-- 1. Primero las utilidades y validaciones -->
     <script src="js/utils.js"></script>
+
+    <!-- 2. Luego el gestor de autenticación -->
     <script src="js/auth.js"></script>
+
+    <!-- 3. Finalmente la lógica específica de la página -->
     <script src="js/login.js"></script>
 </body>
 
