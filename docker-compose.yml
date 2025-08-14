@@ -1,0 +1,55 @@
+version: "3.8"
+
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: secure_platform_db
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-secure_root_2024}
+      MYSQL_DATABASE: ${DB_NAME:-secure_platform}
+      MYSQL_USER: ${DB_USER:-secure_user}
+      MYSQL_PASSWORD: ${DB_PASSWORD:-secure_pass_2024}
+    ports:
+      - "${DB_PORT:-3306}:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./database:/docker-entrypoint-initdb.d
+    command: --default-authentication-plugin=mysql_native_password
+    networks:
+      - secure_network
+
+  redis:
+    image: redis:7-alpine
+    container_name: secure_platform_redis
+    restart: always
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - secure_network
+
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    container_name: secure_platform_phpmyadmin
+    restart: always
+    ports:
+      - "8080:80"
+    environment:
+      PMA_HOST: mysql
+      PMA_PORT: 3306
+      PMA_USER: ${DB_USER:-secure_user}
+      PMA_PASSWORD: ${DB_PASSWORD:-secure_pass_2024}
+    depends_on:
+      - mysql
+    networks:
+      - secure_network
+
+volumes:
+  mysql_data:
+  redis_data:
+
+networks:
+  secure_network:
+    driver: bridge

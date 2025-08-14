@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Plataforma Web Segura</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="css/dashboard.css">
+</head>
+<body>
+    <div class="app-container">
+        <nav class="sidebar">
+            <div class="sidebar-header">
+                <div class="logo">
+                    <div class="shield-icon">🛡️</div>
+                    <span>SecurePlatform</span>
+                </div>
+            </div>
+
+            <ul class="nav-menu">
+                <li class="nav-item active">
+                    <a href="#dashboard" class="nav-link" data-section="dashboard">
+                        <span class="nav-icon">📊</span>
+                        <span class="nav-text">Dashboard</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="#users" class="nav-link" data-section="users">
+                        <span class="nav-icon">👥</span>
+                        <span class="nav-text">Usuarios</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="#roles" class="nav-link" data-section="roles">
+                        <span class="nav-icon">🔐</span>
+                        <span class="nav-text">Roles y Permisos</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="#vulnerabilities" class="nav-link" data-section="vulnerabilities">
+                        <span class="nav-icon">🔍</span>
+                        <span class="nav-text">Vulnerabilidades</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="#certificates" class="nav-link" data-section="certificates">
+                        <span class="nav-icon">📜</span>
+                        <span class="nav-text">Certificados</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="#security-logs" class="nav-link" data-section="security-logs">
+                        <span class="nav-icon">📋</span>
+                        <span class="nav-text">Logs de Seguridad</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="#alerts" class="nav-link" data-section="alerts">
+                        <span class="nav-icon">🚨</span>
+                        <span class="nav-text">Alertas</span>
+                    </a>
+                </li>
+            </ul>
+
+            <div class="sidebar-footer">
+                <div class="user-info">
+                    <div class="user-avatar">👤</div>
+                    <div class="user-details">
+                        <span id="currentUser" class="user-name">Usuario</span>
+                        <span class="user-role">Administrador</span>
+                    </div>
+                </div>
+                <button id="logoutBtn" class="logout-btn">Cerrar Sesión</button>
+            </div>
+        </nav>
+
+        <main class="main-content">
+            <header class="top-bar">
+                <div class="page-title">
+                    <h1 id="pageTitle">Dashboard de Seguridad</h1>
+                </div>
+                <div class="top-bar-actions">
+                    <button id="refreshBtn" class="action-btn">🔄 Actualizar</button>
+                    <div class="user-menu">
+                        <button id="userMenuBtn" class="user-menu-btn">
+                            <span id="userDisplayName">Usuario</span>
+                            <span class="dropdown-arrow">▼</span>
+                        </button>
+                        <div id="userDropdown" class="user-dropdown">
+                            <a href="#profile">Mi Perfil</a>
+                            <a href="#settings">Configuración</a>
+                            <a href="#" id="setup2FA">Configurar 2FA</a>
+                            <hr>
+                            <a href="#" id="logoutLink">Cerrar Sesión</a>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <div class="content-area">
+                <!-- Dashboard Section -->
+                <section id="dashboard-section" class="content-section active">
+                    <div class="metrics-grid">
+                        <div class="metric-card">
+                            <div class="metric-icon">👥</div>
+                            <div class="metric-content">
+                                <h3 id="totalUsers">0</h3>
+                                <p>Usuarios Activos</p>
+                            </div>
+                        </div>
+                        <div class="metric-card">
+                            <div class="metric-icon">🔒</div>
+                            <div class="metric-content">
+                                <h3 id="activeSessions">0</h3>
+                                <p>Sesiones Activas</p>
+                            </div>
+                        </div>
+                        <div class="metric-card alert">
+                            <div class="metric-icon">⚠️</div>
+                            <div class="metric-content">
+                                <h3 id="failedLogins">0</h3>
+                                <p>Intentos Fallidos (24h)</p>
+                            </div>
+                        </div>
+                        <div class="metric-card critical">
+                            <div class="metric-icon">🚨</div>
+                            <div class="metric-content">
+                                <h3 id="suspiciousActivities">0</h3>
+                                <p>Actividades Sospechosas</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="dashboard-grid">
+                        <div class="dashboard-card">
+                            <div class="card-header">
+                                <h3>Tendencias de Login</h3>
+                                <button class="card-action">📊</button>
+                            </div>
+                            <div class="card-content">
+                                <canvas id="loginTrendsChart" width="400" height="200"></canvas>
+                            </div>
+                        </div>
+
+                        <div class="dashboard-card">
+                            <div class="card-header">
+                                <h3>IPs Sospechosas</h3>
+                                <button class="card-action">🔍</button>
+                            </div>
+                            <div class="card-content">
+                                <div id="suspiciousIPs" class="ip-list">
+                                    <div class="loading">Cargando datos...</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="dashboard-card">
+                            <div class="card-header">
+                                <h3>Alertas Recientes</h3>
+                                <button class="card-action">🚨</button>
+                            </div>
+                            <div class="card-content">
+                                <div id="recentAlerts" class="alerts-list">
+                                    <div class="loading">Cargando alertas...</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="dashboard-card">
+                            <div class="card-header">
+                                <h3>Estado del Sistema</h3>
+                                <button class="card-action">⚙️</button>
+                            </div>
+                            <div class="card-content">
+                                <div class="system-status">
+                                    <div class="status-item">
+                                        <span class="status-label">Base de Datos</span>
+                                        <span class="status-indicator online">●</span>
+                                    </div>
+                                    <div class="status-item">
+                                        <span class="status-label">Autenticación</span>
+                                        <span class="status-indicator online">●</span>
+                                    </div>
+                                    <div class="status-item">
+                                        <span class="status-label">Escaneo de Vulnerabilidades</span>
+                                        <span class="status-indicator online">●</span>
+                                    </div>
+                                    <div class="status-item">
+                                        <span class="status-label">Certificados</span>
+                                        <span class="status-indicator online">●</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Users Section -->
+                <section id="users-section" class="content-section">
+                    <div class="section-header">
+                        <h2>Gestión de Usuarios</h2>
+                        <button id="addUserBtn" class="primary-btn">+ Nuevo Usuario</button>
+                    </div>
+
+                    <div class="filters-bar">
+                        <input type="text" id="userSearch" placeholder="Buscar usuarios..." class="search-input">
+                        <select id="userStatusFilter" class="filter-select">
+                            <option value="">Todos los estados</option>
+                            <option value="active">Activos</option>
+                            <option value="inactive">Inactivos</option>
+                            <option value="suspended">Suspendidos</option>
+                        </select>
+                    </div>
+
+                    <div class="table-container">
+                        <table id="usersTable" class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Usuario</th>
+                                    <th>Email</th>
+                                    <th>Roles</th>
+                                    <th>Estado</th>
+                                    <th>Último Login</th>
+                                    <th>2FA</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td colspan="7" class="loading-row">Cargando usuarios...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <!-- Roles Section -->
+                <section id="roles-section" class="content-section">
+                    <div class="section-header">
+                        <h2>Roles y Permisos (ABAC)</h2>
+                        <button id="addRoleBtn" class="primary-btn">+ Nuevo Rol</button>
+                    </div>
+
+                    <div class="roles-grid">
+                        <div id="rolesContainer" class="roles-container">
+                            <div class="loading">Cargando roles...</div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Vulnerabilities Section -->
+                <section id="vulnerabilities-section" class="content-section">
+                    <div class="section-header">
+                        <h2>Análisis de Vulnerabilidades</h2>
+                        <button id="newScanBtn" class="primary-btn">🔍 Nuevo Escaneo</button>
+                    </div>
+
+                    <div class="vuln-stats">
+                        <div class="stat-card">
+                            <h4>Escaneos Totales</h4>
+                            <span id="totalScans">0</span>
+                        </div>
+                        <div class="stat-card critical">
+                            <h4>Vulnerabilidades Críticas</h4>
+                            <span id="criticalVulns">0</span>
+                        </div>
+                        <div class="stat-card high">
+                            <h4>Alto Riesgo</h4>
+                            <span id="highRiskScans">0</span>
+                        </div>
+                    </div>
+
+                    <div class="table-container">
+                        <table id="vulnerabilitiesTable" class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Tipo de Escaneo</th>
+                                    <th>Recurso</th>
+                                    <th>Estado</th>
+                                    <th>Puntuación de Riesgo</th>
+                                    <th>Vulnerabilidades</th>
+                                    <th>Fecha</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td colspan="7" class="loading-row">Cargando escaneos...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <!-- Certificates Section -->
+                <section id="certificates-section" class="content-section">
+                    <div class="section-header">
+                        <h2>Certificados Digitales</h2>
+                        <button id="generateCertBtn" class="primary-btn">📜 Generar Certificado</button>
+                    </div>
+
+                    <div class="table-container">
+                        <table id="certificatesTable" class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Número de Serie</th>
+                                    <th>Estado</th>
+                                    <th>Emitido</th>
+                                    <th>Expira</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td colspan="5" class="loading-row">Cargando certificados...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <!-- Security Logs Section -->
+                <section id="security-logs-section" class="content-section">
+                    <div class="section-header">
+                        <h2>Logs de Seguridad</h2>
+                        <button id="exportLogsBtn" class="secondary-btn">📥 Exportar</button>
+                    </div>
+
+                    <div class="filters-bar">
+                        <input type="text" id="logSearch" placeholder="Buscar en logs..." class="search-input">
+                        <select id="riskLevelFilter" class="filter-select">
+                            <option value="">Todos los niveles</option>
+                            <option value="low">Bajo</option>
+                            <option value="medium">Medio</option>
+                            <option value="high">Alto</option>
+                            <option value="critical">Crítico</option>
+                        </select>
+                        <input type="date" id="dateFromFilter" class="date-input">
+                        <input type="date" id="dateToFilter" class="date-input">
+                    </div>
+
+                    <div class="table-container">
+                        <table id="securityLogsTable" class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Fecha/Hora</th>
+                                    <th>Usuario</th>
+                                    <th>Acción</th>
+                                    <th>Recurso</th>
+                                    <th>IP</th>
+                                    <th>Nivel de Riesgo</th>
+                                    <th>Estado</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td colspan="7" class="loading-row">Cargando logs...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <!-- Alerts Section -->
+                <section id="alerts-section" class="content-section">
+                    <div class="section-header">
+                        <h2>Configuración de Alertas</h2>
+                        <button id="addAlertBtn" class="primary-btn">+ Nueva Alerta</button>
+                    </div>
+
+                    <div id="alertsContainer" class="alerts-container">
+                        <div class="loading">Cargando alertas...</div>
+                    </div>
+                </section>
+            </div>
+        </main>
+    </div>
+
+    <!-- Modals -->
+    <div id="modalOverlay" class="modal-overlay">
+        <div id="modalContent" class="modal-content">
+            <!-- Modal content will be dynamically inserted here -->
+        </div>
+    </div>
+
+    <div id="alertContainer" class="alert-container"></div>
+
+    <script src="js/utils.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/api.js"></script>
+    <script src="js/dashboard.js"></script>
+    <script src="js/users.js"></script>
+    <script src="js/roles.js"></script>
+    <script src="js/vulnerabilities.js"></script>
+    <script src="js/certificates.js"></script>
+    <script src="js/security-logs.js"></script>
+    <script src="js/alerts.js"></script>
+</body>
+</html>

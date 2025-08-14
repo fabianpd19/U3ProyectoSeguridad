@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Plataforma Web Segura - Login</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="css/login.css">
+</head>
+
+<body class="login-page">
+    <div class="login-container">
+        <div class="login-card">
+            <div class="login-header">
+                <div class="logo">
+                    <div class="shield-icon">🛡️</div>
+                    <h1>Plataforma Web Segura</h1>
+                </div>
+                <p class="subtitle">Análisis de vulnerabilidades y control de acceso</p>
+            </div>
+
+            <div id="loginContainer">
+                <form id="loginForm" class="login-form">
+                    <div class="form-group">
+                        <label for="username">Usuario o Email</label>
+                        <input type="text" id="username" name="username" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="password">Contraseña</label>
+                        <input type="password" id="password" name="password" required>
+                    </div>
+
+                    <div class="form-group captcha-group">
+                        <label for="captcha">Captcha</label>
+                        <div class="captcha-container">
+                            <div id="captchaDisplay" class="captcha-display">Cargando...</div>
+                            <button type="button" id="refreshCaptcha" class="refresh-btn">🔄</button>
+                        </div>
+                        <input type="text" id="captcha" name="captcha" placeholder="Ingrese el resultado" required>
+                    </div>
+
+                    <div id="twoFactorGroup" class="form-group" style="display: none;">
+                        <label for="twoFactorCode">Código de Autenticación (2FA)</label>
+                        <input type="text" id="twoFactorCode" name="twoFactorCode" placeholder="000000" maxlength="6">
+                    </div>
+
+                    <button type="submit" id="loginBtn" class="login-btn">
+                        <span class="btn-text">Iniciar Sesión</span>
+                        <span class="btn-loading" style="display: none;">Verificando...</span>
+                    </button>
+
+                    <div class="login-links">
+                        <a href="#" id="registerLink">¿No tienes cuenta? Regístrate</a>
+                    </div>
+                </form>
+            </div>
+
+            <div id="registerContainer" class="register-form" style="display: none;">
+                <h2>Crear Cuenta</h2>
+                <form id="registerForm">
+                    <div class="form-group">
+                        <label for="regUsername">Nombre de Usuario</label>
+                        <input type="text" id="regUsername" name="regUsername" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="regEmail">Email</label>
+                        <input type="email" id="regEmail" name="regEmail" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="regPassword">Contraseña</label>
+                        <input type="password" id="regPassword" name="regPassword" required>
+                        <div class="password-strength">
+                            <div id="passwordStrength" class="strength-bar"></div>
+                            <span id="strengthText" class="strength-text"></span>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="regConfirmPassword">Confirmar Contraseña</label>
+                        <input type="password" id="regConfirmPassword" name="regConfirmPassword" required>
+                    </div>
+                    <div class="form-group captcha-group">
+                        <label for="regCaptcha">Captcha</label>
+                        <div class="captcha-container">
+                            <div id="regCaptchaDisplay" class="captcha-display">Cargando...</div>
+                            <button type="button" id="regRefreshCaptcha" class="refresh-btn">🔄</button>
+                        </div>
+                        <input type="text" id="regCaptcha" name="regCaptcha" placeholder="Ingrese el resultado"
+                            required>
+                    </div>
+                    <button type="submit" id="registerBtn" class="login-btn">
+                        <span class="btn-text">Crear Cuenta</span>
+                        <span class="btn-loading" style="display: none;">Creando...</span>
+                    </button>
+                    <div class="login-links">
+                        <a href="#" id="loginLink">¿Ya tienes cuenta? Inicia sesión</a>
+                    </div>
+                </form>
+            </div>
+
+            <div id="alertContainer" class="alert-container"></div>
+        </div>
+    </div>
+
+    <script src="js/utils.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/login.js"></script>
+</body>
+
+</html>
